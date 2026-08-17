@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+streamlit
+requests
+pydantic
+langchain
+langchain-chroma
+langchain-ollama
+pypdf
+rank-bm25
+flashrank
+chromadb
+ollama

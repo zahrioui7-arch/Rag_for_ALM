@@ -1,0 +1,12 @@
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.vscode/
+
+# Local Vector Database & Caches
+alm_chroma_db/
+
+# Local PDF files (optional: omit if you want to share test docs)
+alm_docs/*.pdf
