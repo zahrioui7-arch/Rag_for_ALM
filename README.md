@@ -12,5 +12,5 @@ An enterprise-grade Retrieval-Augmented Generation (RAG) assistant designed for 
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/YOUR_USERNAME/alm-rag-assistant.git](https://github.com/YOUR_USERNAME/alm-rag-assistant.git)
-   cd alm-rag-assistant
+   git clone [https://github.com/zahrioui7-arch/rag_for_alm.git]
+   cd rag_for_alm
