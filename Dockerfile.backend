@@ -1,0 +1,15 @@
+FROM python:3.14-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY backend.py .
+COPY generation_engine_complete.py .
+COPY persistence/ ./persistence/ 
+COPY db/ ./db/
+
+# alm_docs and alm_chroma_db are mounted as volumes in docker-compose.yml,
+# not copied here -- so you can add/update PDFs without rebuilding the image.
+
+EXPOSE 8000
+CMD ["uvicorn", "backend:app", "--host", "0.0.0.0", "--port", "8000"]

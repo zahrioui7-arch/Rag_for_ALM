@@ -1,0 +1,17 @@
+chromadb
+fastapi
+flashrank
+langchain_chroma
+langchain_community
+langchain_ollama
+langchain_core
+ollama
+persistence
+pypdf
+pydantic
+rank_bm25
+requests
+streamlit
+sqlalchemy
+uvicorn
+asyncpg

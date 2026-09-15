@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: alm_postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - alm_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: alm_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    extra_hosts:
+      # Makes host.docker.internal resolve on Linux too (Mac/Windows have it by default)
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./alm_docs:/app/alm_docs
+      - ./alm_chroma_db:/app/alm_chroma_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: alm_frontend
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      # "backend" = the service name above
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
+
+volumes:
+  alm_pg_data:
