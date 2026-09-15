@@ -1,6 +1,6 @@
 import os
 import re
-# import numpy as np
+import numpy as np
 # import chromadb
 from langchain_chroma import Chroma
 from pypdf import PdfReader
@@ -19,6 +19,12 @@ from flashrank import Ranker, RerankRequest
 import chromadb
 from chromadb import Documents, EmbeddingFunction, Embeddings
 import ollama
+
+# Explicit override so we don't depend on whether the ollama/langchain_ollama
+# client versions in use auto-read OLLAMA_HOST. Defaults to localhost for
+# local (non-Docker) dev; docker-compose.yml sets OLLAMA_HOST for containers.
+OLLAMA_BASE_URL = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+_ollama_client = ollama.Client(host=OLLAMA_BASE_URL)
 # ==========================================
 # MODULE 1: Guardrail & Rewriter
 # ==========================================
@@ -38,7 +44,7 @@ class PromptGuardrail:
 class PromptRewriter:
     def __init__(self, model_name="qwen3.6:35b-a3b"): 
         # Ensure the model name matches your ollama list
-        self.llm = OllamaLLM(model=model_name, temperature=0.1) # Low temperature for consistency
+        self.llm = OllamaLLM(model=model_name, temperature=0.1, base_url=OLLAMA_BASE_URL) # Low temperature for consistency
         
         # Nemotron Nano benefits from very structured, directive prompts
         self.template = """### Instruction:
@@ -74,8 +80,8 @@ Rewrite the following user query to be a clear, formal, and detailed search quer
         return response.strip()
 
 class PromptRewriter:
-    def __init__(self, model_name="qwen3.6:35b-a3b"):
-        self.llm = OllamaLLM(model=model_name, temperature=0.1)
+    def __init__(self, model_name="nemotron-3-nano:4b"):
+        self.llm = OllamaLLM(model=model_name, temperature=0.1, base_url=OLLAMA_BASE_URL)
         self.template = """### Instruction:
 Rewrite the following user query to be a clear, formal search query for an ALM knowledge base.
 Output ONLY the rewritten query. No conversation.
@@ -174,8 +180,10 @@ class OllamaEmbeddingFunction(EmbeddingFunction):
         self.model_name = model_name
 
     def __call__(self, input: Documents) -> Embeddings:
-        # Ollama can take a list of texts and return a list of embeddings
-        response = ollama.embed(model=self.model_name, input=list(input))
+        # Ollama can take a list of texts and return a list of embeddings.
+        # Uses the module-level client so this respects OLLAMA_BASE_URL/OLLAMA_HOST
+        # instead of the ollama library's hardcoded localhost default.
+        response = _ollama_client.embed(model=self.model_name, input=list(input))
         return response['embeddings']
 
 
@@ -230,7 +238,7 @@ class HybridRetriever:
             print("\n", counter, "\n", res['text'] )
             counter += 1
         return [res['text'] for res in reranked[:top_k]]
-    print("sidfn")
+
 
 
 # class ALMVectorStore:
@@ -291,14 +299,14 @@ class HybridRetriever:
     #     reranked = self.ranker.rerank(query=query, docs=ranker_input)
     #     return [res['text'] for res in reranked[:top_k]]
 
-    # print("sidfn")
-print("sidfn")
+
+
 # ==========================================
 # MODULE 5: Generator
 # ==========================================
 class ALMGenerator:
-    def __init__(self, model_name="qwen3.6:35b-a3b"):
-        self.llm = OllamaLLM(model=model_name, temperature=0.1)
+    def __init__(self, model_name="nemotron-3-nano:4b"):
+        self.llm = OllamaLLM(model=model_name, temperature=0.1, base_url=OLLAMA_BASE_URL)
         self.template = """Instruction:
 You are an ALM Specialist. Answer using ONLY the context below. 
 If not in context, say "Information not available"\n
